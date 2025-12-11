@@ -51,25 +51,25 @@ api-backend/
 
 ## Prerequisites
 
-- Go 1.21 or higher
-- Docker and Docker Compose (for local development)
-- PostgreSQL (if running without Docker)
+- Docker and Docker Compose
+
+**Note:** This project uses Docker for all Go operations. No local Go installation is required.
 
 ## Getting Started
 
-### Local Development with Docker
+### Development with Docker
 
 1. Clone and navigate to the project:
    ```bash
    cd api-backend
    ```
 
-2. Copy environment variables:
+2. Copy environment variables (optional, docker-compose has defaults):
    ```bash
    cp .env.example .env
    ```
 
-3. Start the services:
+3. Start all services (database + API):
    ```bash
    make docker-up
    ```
@@ -86,32 +86,22 @@ api-backend/
    make docker-down
    ```
 
-### Local Development without Docker
+### Available Make Commands
 
-1. Install dependencies:
-   ```bash
-   go mod download
-   ```
+All commands use Docker internally:
 
-2. Set up PostgreSQL database and update `.env` file:
-   ```bash
-   cp .env.example .env
-   # Edit .env with your database credentials
-   ```
-
-3. Run the application:
-   ```bash
-   make run
-   ```
-
-4. For hot reload during development:
-   ```bash
-   # Install Air
-   go install github.com/air-verse/air@latest
-
-   # Run with hot reload
-   make dev
-   ```
+```bash
+make help          # Show available commands
+make build         # Build the application binary via Docker
+make run           # Run the application via Docker Compose
+make test          # Run tests via Docker (starts database automatically)
+make tidy          # Run go mod tidy via Docker
+make docker-build  # Build Docker image
+make docker-up     # Start Docker containers in background
+make docker-down   # Stop and remove Docker containers
+make docker-logs   # View container logs
+make clean         # Remove build artifacts
+```
 
 ## API Endpoints
 
@@ -242,19 +232,26 @@ Migrations run automatically on application startup. To add new migrations, edit
 
 ## Testing
 
-Run tests:
+Run all tests via Docker (database starts automatically):
 ```bash
 make test
 ```
 
+All tests run in a containerized Go environment with a PostGIS database.
+
 ## Building
 
-Build the binary:
+Build the application binary via Docker:
 ```bash
 make build
 ```
 
 The binary will be in `./bin/api`
+
+Build the Docker image:
+```bash
+make docker-build
+```
 
 ## Adding New Endpoints
 

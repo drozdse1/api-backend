@@ -1,28 +1,40 @@
-.PHONY: help build run test clean docker-up docker-down docker-logs dev
+.PHONY: help build run test clean docker-up docker-down docker-logs docker-build tidy
 
 help:
 	@echo "Available commands:"
-	@echo "  make build       - Build the application"
-	@echo "  make run         - Run the application locally"
-	@echo "  make test        - Run tests"
-	@echo "  make clean       - Clean build artifacts"
-	@echo "  make docker-up   - Start Docker containers"
-	@echo "  make docker-down - Stop Docker containers"
-	@echo "  make docker-logs - View Docker logs"
-	@echo "  make dev         - Start local development with hot reload"
+	@echo "  make build         - Build the application via Docker"
+	@echo "  make run           - Run the application via Docker Compose"
+	@echo "  make test          - Run tests via Docker"
+	@echo "  make tidy          - Run go mod tidy via Docker"
+	@echo "  make clean         - Clean build artifacts"
+	@echo "  make docker-build  - Build Docker image"
+	@echo "  make docker-up     - Start Docker containers"
+	@echo "  make docker-down   - Stop Docker containers"
+	@echo "  make docker-logs   - View Docker logs"
 
 build:
-	go build -o bin/api ./cmd/api
+	docker run --rm -v $$(pwd):/app -w /app golang:1.21-alpine go build -o bin/api ./cmd/api
 
 run:
-	go run ./cmd/api/main.go
+	docker compose up
 
 test:
-	go test -v ./...
+	@echo "Starting database for tests..."
+	@docker compose up -d db
+	@sleep 3
+	@echo "Running tests..."
+	docker run --rm -v $$(pwd):/app -w /app --network api-backend_default \
+		-e DATABASE_URL=postgresql://apiuser:apipassword@db:5432/apidb?sslmode=disable \
+		golang:1.21-alpine go test -v ./...
+
+tidy:
+	docker run --rm -v $$(pwd):/app -w /app golang:1.21-alpine go mod tidy
 
 clean:
 	rm -rf bin/
-	go clean
+
+docker-build:
+	docker build -t api-backend .
 
 docker-up:
 	docker compose up -d
@@ -32,7 +44,3 @@ docker-down:
 
 docker-logs:
 	docker compose logs -f
-
-dev:
-	@echo "Install 'air' for hot reload: go install github.com/air-verse/air@latest"
-	air
